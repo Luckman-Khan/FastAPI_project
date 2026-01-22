@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import base64
 import urllib.parse
+import time
 
 st.set_page_config(page_title="Simple Social", layout="wide")
 
@@ -80,6 +81,7 @@ def upload_page():
 
             if response.status_code == 200:
                 st.success("Posted!")
+                time.sleep(2)
                 st.rerun()
             else:
                 st.error("Upload failed!")
