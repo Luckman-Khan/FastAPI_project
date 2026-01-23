@@ -9,8 +9,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import ForeignKey
 from fastapi import Depends
 
-DATABASE_URL = "sqlite+aiosqlite:///./test.db?timeout=10"
-
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db?timeout=10")
 
 
 class Base(DeclarativeBase):
@@ -27,6 +26,7 @@ class Post(Base):
     url = Column(String, nullable=False)
     file_type = Column(String, nullable=False)
     file_name = Column(String, nullable=False)
+    file_id = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
     user_id = Column(Uuid, ForeignKey("user.id"),nullable=False)
     user = relationship("User", back_populates="posts")
