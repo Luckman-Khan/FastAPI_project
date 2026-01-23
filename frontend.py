@@ -68,6 +68,18 @@ def login_page():
 
 
 def upload_page():
+    # 👇 CSS to hide the "Limit 200MB" text
+    st.markdown("""
+        <style>
+            [data-testid="stFileUploader"] section > input + div {
+                display: none;
+            }
+            /* Alternative selector if the above doesn't catch it */
+            [data-testid="stFileUploader"] small {
+                display: none;
+            }
+        </style>""", unsafe_allow_html=True)
+    
     st.title("📸 Share Something")
 
     uploaded_file = st.file_uploader("Choose media", type=['png', 'jpg', 'jpeg', 'mp4', 'avi', 'mov', 'mkv', 'webm'])
