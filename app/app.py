@@ -48,7 +48,8 @@ async def upload_file(
                 caption=caption,
                 url=upload_result.url,
                 file_type="video" if file.content_type.startswith("video/") else "image",
-                file_name=upload_result.name
+                file_name=upload_result.name,
+                file_id=upload_result.file_id
 
             )
             session.add(post)
@@ -114,6 +115,13 @@ async def delete_post(
         
         if post.user_id != user.id:
             raise HTTPException(status_code=403, detail="You are not authorized to delete this post")
+
+        try:
+            imagekit.delete_file(file_id=post.file_id)
+        except Exception as e:
+            # We print the error but don't stop the function, 
+            # ensuring the post is deleted from DB even if ImageKit fails
+            print(f"Error deleting from ImageKit: {e}")
 
         await session.delete(post)
         await session.commit()

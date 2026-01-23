@@ -8,6 +8,7 @@ from fastapi_users.db import SQLAlchemyBaseUserTableUUID, SQLAlchemyUserDatabase
 from sqlalchemy.orm import relationship
 from sqlalchemy import ForeignKey
 from fastapi import Depends
+import os
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db?timeout=10")
 
