@@ -1,4 +1,4 @@
-# Simple Social
+# Pixel Flow
 
 A full-stack social media application offering a unified platform for sharing images and videos. The project is built using a modern **FastAPI** backend and a **Streamlit** frontend, featuring secure user authentication and media management via ImageKit.
 
