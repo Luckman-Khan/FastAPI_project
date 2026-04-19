@@ -4,7 +4,7 @@ import base64
 import urllib.parse
 import time
 
-st.set_page_config(page_title="PixelFlow", layout="wide")
+st.set_page_config(page_title="Simple Social", layout="wide")
 
 API_URL = "https://simple-social-api-5efn.onrender.com"
 
@@ -22,7 +22,7 @@ def get_headers():
 
 
 def login_page():
-    st.title("Welcome to PixelFlow")
+    st.title("🚀 Welcome to Simple Social")
 
     email = st.text_input("Email:")
     password = st.text_input("Password:", type="password")
