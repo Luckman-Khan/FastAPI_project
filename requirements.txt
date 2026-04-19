@@ -1,2 +1,7 @@
 streamlit
 requests
+<<<<<<< HEAD
+=======
+asyncpg
+uvicorn
+>>>>>>> ce3094c (initial commit)

@@ -3,11 +3,18 @@ import requests
 import base64
 import urllib.parse
 import time
+import os
+from dotenv import load_dotenv
+from requests.exceptions import RequestException
 
-st.set_page_config(page_title="Simple Social", layout="wide")
+st.set_page_config(page_title="PixelFlow", layout="wide")
 
-API_URL = "https://simple-social-api-5efn.onrender.com"
+load_dotenv()
 
+API_URL = os.getenv("API_URL", "http://127.0.0.1:8000").rstrip("/")
+REQUEST_TIMEOUT = 15
+
+# Initialize session state
 if 'token' not in st.session_state:
     st.session_state.token = None
 if 'user' not in st.session_state:
@@ -21,9 +28,20 @@ def get_headers():
     return {}
 
 
-def login_page():
-    st.title("🚀 Welcome to Simple Social")
+def api_request(method, path, **kwargs):
+    kwargs.setdefault("timeout", REQUEST_TIMEOUT)
+    return requests.request(method, f"{API_URL}{path}", **kwargs)
 
+
+def show_backend_error(action, error):
+    st.error(f"Could not {action}. Make sure the backend is running at {API_URL}.")
+    st.caption(str(error))
+
+
+def login_page():
+    st.title("Welcome to PixelFlow")
+
+    # Simple form with two buttons
     email = st.text_input("Email:")
     password = st.text_input("Password:", type="password")
 
@@ -32,14 +50,24 @@ def login_page():
 
         with col1:
             if st.button("Login", type="primary", use_container_width=True):
+                # Login using FastAPI Users JWT endpoint
                 login_data = {"username": email, "password": password}
-                response = requests.post(f"{API_URL}/auth/jwt/login", data=login_data)
+                try:
+                    response = api_request("post", "/auth/jwt/login", data=login_data)
+                except RequestException as error:
+                    show_backend_error("log in", error)
+                    return
 
                 if response.status_code == 200:
                     token_data = response.json()
                     st.session_state.token = token_data["access_token"]
 
-                    user_response = requests.get(f"{API_URL}/users/me", headers=get_headers())
+                    # Get user info
+                    try:
+                        user_response = api_request("get", "/users/me", headers=get_headers())
+                    except RequestException as error:
+                        show_backend_error("load your profile", error)
+                        return
                     if user_response.status_code == 200:
                         st.session_state.user = user_response.json()
                         st.rerun()
@@ -50,8 +78,13 @@ def login_page():
 
         with col2:
             if st.button("Sign Up", type="secondary", use_container_width=True):
+                # Register using FastAPI Users
                 signup_data = {"email": email, "password": password}
-                response = requests.post(f"{API_URL}/auth/register", json=signup_data)
+                try:
+                    response = api_request("post", "/auth/register", json=signup_data)
+                except RequestException as error:
+                    show_backend_error("sign up", error)
+                    return
 
                 if response.status_code == 201:
                     st.success("Account created! Click Login now.")
@@ -63,11 +96,13 @@ def login_page():
 
 
 def upload_page():
+    # 👇 CSS to hide the "Limit 200MB" text
     st.markdown("""
         <style>
             [data-testid="stFileUploader"] section > input + div {
                 display: none;
             }
+            /* Alternative selector if the above doesn't catch it */
             [data-testid="stFileUploader"] small {
                 display: none;
             }
@@ -82,7 +117,11 @@ def upload_page():
         with st.spinner("Uploading..."):
             files = {"file": (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
             data = {"caption": caption}
-            response = requests.post(f"{API_URL}/upload", files=files, data=data, headers=get_headers())
+            try:
+                response = api_request("post", "/upload", files=files, data=data, headers=get_headers())
+            except RequestException as error:
+                show_backend_error("upload", error)
+                return
 
             if response.status_code == 200:
                 st.success("Posted!")
@@ -96,13 +135,16 @@ def encode_text_for_overlay(text):
     """Encode text for ImageKit overlay - base64 then URL encode"""
     if not text:
         return ""
+    # Base64 encode the text
     base64_text = base64.b64encode(text.encode('utf-8')).decode('utf-8')
+    # URL encode the result
     return urllib.parse.quote(base64_text)
 
 
 def create_transformed_url(original_url, transformation_params, caption=None):
     if caption:
         encoded_caption = encode_text_for_overlay(caption)
+        # Add text overlay at bottom with semi-transparent background
         text_overlay = f"l-text,ie-{encoded_caption},ly-N20,lx-20,fs-100,co-white,bg-000000A0,l-end"
         transformation_params = text_overlay
 
@@ -120,7 +162,12 @@ def create_transformed_url(original_url, transformation_params, caption=None):
 def feed_page():
     st.title("🏠 Feed")
 
-    response = requests.get(f"{API_URL}/feed", headers=get_headers())
+    try:
+        response = api_request("get", "/feed", headers=get_headers())
+    except RequestException as error:
+        show_backend_error("load the feed", error)
+        return
+
     if response.status_code == 200:
         posts = response.json()["posts"]
 
@@ -131,36 +178,46 @@ def feed_page():
         for post in posts:
             st.markdown("---")
 
+            # Header with user, date, and delete button (if owner)
             col1, col2 = st.columns([4, 1])
             with col1:
                 st.markdown(f"**{post['email']}** • {post['created_at'][:10]}")
             with col2:
                 if post.get('is_owner', False):
                     if st.button("🗑️", key=f"delete_{post['id']}", help="Delete post"):
-                        response = requests.delete(f"{API_URL}/posts/{post['id']}", headers=get_headers())
+                        # Delete the post
+                        try:
+                            response = api_request("delete", f"/posts/{post['id']}", headers=get_headers())
+                        except RequestException as error:
+                            show_backend_error("delete the post", error)
+                            return
                         if response.status_code == 200:
                             st.success("Post deleted!")
                             st.rerun()
                         else:
                             st.error("Failed to delete post!")
 
+            # Uniform media display with caption overlay
             caption = post.get('caption', '')
             if post['file_type'] == 'image':
                 uniform_url = create_transformed_url(post['url'], "", caption)
                 st.image(uniform_url, width=300)
             else:
+                # For videos: specify only height to maintain aspect ratio + caption overlay
                 uniform_video_url = create_transformed_url(post['url'], "w-400,h-200,cm-pad_resize,bg-blurred")
                 st.video(uniform_video_url, width=300)
                 st.caption(caption)
 
-            st.markdown("")
+            st.markdown("")  # Space between posts
     else:
         st.error("Failed to load feed")
 
 
+# Main app logic
 if st.session_state.user is None:
     login_page()
 else:
+    # Sidebar navigation
     st.sidebar.title(f"👋 Hi {st.session_state.user['email']}!")
 
     if st.sidebar.button("Logout"):
