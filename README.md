@@ -1,18 +1,22 @@
-# Simple Social
+# PixelFlow
 
-A Streamlit frontend application offering a unified platform for sharing images and videos. This is the UI client for the Simple Social application, featuring user authentication, media upload via ImageKit, and a dynamic social feed.
+A full-stack social media application offering a unified platform for sharing images and videos. The project is built using a modern **FastAPI** backend and a **Streamlit** frontend, featuring secure user authentication and media management via ImageKit.
 
 ## Features
 
--   **User Authentication**: JWT-based signup and login flows communicating with a remote backend.
--   **Media Upload**: Support for image and video uploads directly integrated via the backend.
--   **Social Feed**: Real-time feed displaying posts from all users with timestamps and captions.
--   **Interactive UI**: A responsive, clean interface built entirely with Streamlit.
+-   **User Authentication**: concise and secure signup/login/logout flow using JWT (JSON Web Tokens) backed by `fastapi-users`.
+-   **Media Upload**: Support for image and video uploads with cloud storage integration using **ImageKit.io**.
+-   **Social Feed**: Real-time feed displaying posts from all users with timestamps and owner details.
+-   **Interactive UI**: A responsive, clean interface built with Streamlit.
+-   **Database**: SQLite with asynchronous SQLAlchemy for efficient data handling.
 
 ## Tech Stack
 
+-   **Backend**: FastAPI, Uvicorn, SQLAlchemy, Pydantic
 -   **Frontend**: Streamlit
--   **Http Client / API Integration**: Requests (Python)
+-   **Authentication**: FastAPI Users
+-   **Storage**: ImageKit IO
+-   **Database**: SQLite (Async)
 
 ## Installation
 
@@ -38,9 +42,32 @@ A Streamlit frontend application offering a unified platform for sharing images 
     pip install -r requirements.txt
     ```
 
+4.  **Environment Configuration:**
+    Create a `.env` file in the root directory and add your ImageKit credentials:
+    ```env
+    # ImageKit Credentials
+    IMAGEKIT_PRIVATE_KEY=your_private_key
+    IMAGEKIT_PUBLIC_KEY=your_public_key
+    IMAGEKIT_URL_ENDPOINT=your_url_endpoint
+
+    # Secret for JWT
+    SECRET=your_jwt_secret_string
+    ```
+    *Note: Ensure you have `SECRET` configured for fastapi-users.*
+
 ## Usage
 
-Start the Streamlit application:
+### 1. Start the Backend Server
+Run the FastAPI backend server:
+```bash
+python main.py
+# OR
+uvicorn app.app:app --reload
+```
+The API will be available at `http://localhost:8000`. API Docs are at `http://localhost:8000/docs`.
+
+### 2. Start the Frontend Application
+In a new terminal, run the Streamlit app:
 ```bash
 streamlit run frontend.py
 ```
