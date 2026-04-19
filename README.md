@@ -1,4 +1,4 @@
-# Simple Social Frontend
+# Simple Social
 
 A Streamlit frontend application offering a unified platform for sharing images and videos. This is the UI client for the Simple Social application, featuring user authentication, media upload via ImageKit, and a dynamic social feed.
 
