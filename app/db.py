@@ -10,7 +10,21 @@ from sqlalchemy import ForeignKey
 from fastapi import Depends
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db?timeout=10")
+
+def _normalize_database_url(raw_url: str) -> str:
+    """Map provider URLs to the async SQLAlchemy driver we actually install."""
+    if raw_url.startswith("postgresql+asyncpg://"):
+        return raw_url
+    if raw_url.startswith("postgresql://"):
+        return raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    if raw_url.startswith("postgres://"):
+        return raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
+    return raw_url
+
+
+DATABASE_URL = _normalize_database_url(
+    os.getenv("DATABASE_URL", "sqlite+aiosqlite:///./test.db?timeout=10")
+)
 
 
 class Base(DeclarativeBase):
